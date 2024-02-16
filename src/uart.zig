@@ -1,5 +1,7 @@
 // based on the OpenSBI NS16550 driver.
 
+const std = @import("std");
+
 // the default UART serial device is at 0x10000000 on the QEMU RISC-V virt platform.
 const uart_base: usize = 0x10000000;
 
@@ -44,10 +46,11 @@ pub fn get_char() ?u8 {
 }
 
 pub fn init() void {
-    // 1 << 0 = `0000 0001`
-    // 1 << 1 = `0000 0010`
-    // lcr == `0000 0011`
-    // lcr | 1 << 7 = `1000 0011`
+    // 1 << 0 = 0000 0001
+    // 1 << 1 = 0000 0010
+    // lcr = 0000 0011 #1 if either one is 1
+    // 1 << 7 = 1000 0000
+    // lcr | 1 << 7 = 1000 0011
     const lcr = (1 << 0) | (1 << 1);
     write_reg(UART_LCR_OFFSET, lcr);
     write_reg(UART_FCR_OFFSET, (1 << 0));
@@ -61,4 +64,18 @@ pub fn init() void {
     write_reg(UART_DLM_OFFSET, divisor_most);
 
     write_reg(UART_LCR_OFFSET, lcr);
+}
+
+const Writer = std.io.Writer(u32, error{}, uart_put_str);
+const uart_writer = Writer{ .context = 0 };
+
+fn uart_put_str(_: u32, str: []const u8) !usize {
+    for (str) |ch| {
+        put_char(ch);
+    }
+    return str.len;
+}
+
+pub fn println(comptime fmt: []const u8, args: anytype) void {
+    uart_writer.print(fmt ++ "\n", args) catch {};
 }
