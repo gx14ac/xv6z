@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) anyerror!void {
     const optimize = b.standardOptimizeOption(.{});
     // The default target is riscv64, but we also support riscv32
     const target = b.standardTargetOptions(.{ .default_target = .{
-        .cpu_arch = .riscv64,
+        .cpu_arch = .riscv32,
         .os_tag = .freestanding,
         .abi = .none,
     } });
@@ -21,6 +21,9 @@ pub fn build(b: *std.Build) anyerror!void {
     // Some of the boot-code changes depending on if we're targeting 32-bit
     // or 64-bit, which is why we need the pre-processor to run first.
     kernel.addCSourceFiles(&.{"src/boot.S"}, &.{
+        "-x", "assembler-with-cpp",
+    });
+    kernel.addCSourceFiles(&.{"src/mem.S"}, &.{
         "-x", "assembler-with-cpp",
     });
     b.installArtifact(kernel);
