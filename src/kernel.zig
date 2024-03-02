@@ -13,6 +13,7 @@ export fn trap() align(4) callconv(.C) noreturn {
 // CPU (aka hart) after the boot code has executed.
 export fn kmain() callconv(.C) void {
     page.init();
+
     uart.init();
     uart.println("Zig is running on barebones RISC-V (rv{})!", .{@bitSizeOf(usize)});
 
